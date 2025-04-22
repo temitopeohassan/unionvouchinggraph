@@ -2,8 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { gql, ApolloClient, InMemoryCache } from "@apollo/client";
 import { Network } from "vis-network/standalone";
-import { JsonRpcProvider } from "ethers";
-
+ 
 // Apollo GraphQL setup with error policies
 const client = new ApolloClient({
   uri: "https://api.studio.thegraph.com/query/78581/union-finance/version/latest",
@@ -39,6 +38,7 @@ const VOUCHING_QUERY = gql`
 
 const VouchingGraph = () => {
   const containerRef = useRef(null);
+  const networkRef = useRef(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -119,6 +119,11 @@ const VouchingGraph = () => {
         });
 
         if (containerRef.current) {
+          // Clean up existing network if it exists
+          if (networkRef.current) {
+            networkRef.current.destroy();
+          }
+
           const network = new Network(
             containerRef.current,
             { nodes, edges },
@@ -146,6 +151,8 @@ const VouchingGraph = () => {
             }
           );
 
+          networkRef.current = network;
+
           network.on("stabilizationProgress", (params) => {
             console.log("Stabilization progress:", params.iterations, "/", params.total);
           });
@@ -166,6 +173,9 @@ const VouchingGraph = () => {
 
     return () => {
       mounted = false;
+      if (networkRef.current) {
+        networkRef.current.destroy();
+      }
     };
   }, []);
 
